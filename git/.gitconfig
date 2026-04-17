@@ -1,0 +1,65 @@
+[user]
+	name  = Karthik Kondamudi
+	email = kar6308@gmail.com
+
+[core]
+	editor = zed --wait
+	pager      = delta
+	autocrlf   = input
+	excludesfile = ~/.gitignore_global
+
+[init]
+	defaultBranch = main
+
+[pull]
+	rebase = true
+
+[push]
+	autoSetupRemote = true
+
+[rebase]
+	autoStash = true
+
+[merge]
+	conflictstyle = diff3
+
+[diff]
+	colorMoved = default
+
+# delta — beautiful diffs
+[delta]
+	navigate    = true       # use n/N to move between diff sections
+	light       = false
+	side-by-side = true
+	line-numbers = true
+	syntax-theme = Dracula
+
+[interactive]
+	diffFilter = delta --color-only
+
+# Aliases
+[alias]
+	st      = status
+	co      = checkout
+	br      = branch
+	ci      = commit
+	lg      = log --oneline --graph --decorate --all
+	lp      = log --pretty=format:'%C(yellow)%h%Creset %C(blue)%ad%Creset %C(green)%an%Creset  %s' --date=short
+	undo    = reset HEAD~1 --mixed
+	unstage = restore --staged
+	aliases = config --get-regexp alias
+	# Show files changed in last commit
+	last    = diff HEAD~1 HEAD --name-only
+	# Amend without changing commit message
+	oops    = commit --amend --no-edit
+	# Clean merged branches
+	sweep   = "!git branch --merged main | grep -v 'main\\|master\\|\\*' | xargs -n1 git branch -d"
+
+[color]
+	ui = auto
+
+[url "git@github.com:"]
+	insteadOf = https://github.com/
+
+[credential]
+	helper = osxkeychain

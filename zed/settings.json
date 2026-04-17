@@ -1,0 +1,253 @@
+{
+    "theme": "Dracula",
+
+    "font_family": "JetBrains Mono",
+    "font_size": 13,
+    "buffer_font_family": "JetBrains Mono",
+    "buffer_font_size": 13,
+    "buffer_line_height": "comfortable",
+
+    "ui_font_size": 15,
+    "ui_font_family": ".SystemUIFont",
+
+    "tab_size": 4,
+    "hard_tabs": false,
+    "soft_wrap": "preferred_line_length",
+    "preferred_line_length": 100,
+
+    "autosave": "on_focus_change",
+    "format_on_save": "on",
+    "remove_trailing_whitespace_on_save": true,
+    "ensure_final_newline_on_save": true,
+
+    "cursor_blink": true,
+    "show_completions_on_input": true,
+    "show_completion_documentation": true,
+    "completion_documentation_secondary_query_debounce": 300,
+
+    "show_wrap_guides": true,
+    "wrap_guides": [100],
+
+    "indent_guides": {
+        "enabled": true,
+        "line_width": 1,
+        "active_line_width": 2,
+        "coloring": "indent_aware",
+    },
+
+    "inlay_hints": {
+        "enabled": true,
+        "show_type_hints": true,
+        "show_parameter_hints": true,
+        "show_other_hints": true,
+    },
+
+    "toolbar": {
+        "breadcrumbs": false,
+        "quick_action_bar": true,
+    },
+
+    "tab_bar": {
+        "show": true,
+        "show_nav_history_buttons": false,
+    },
+
+    "scrollbar": {
+        "show": "auto",
+    },
+
+    "gutter": {
+        "line_numbers": true,
+        "code_actions": true,
+        "folds": true,
+    },
+
+    "minimap": {
+        "show": "never",
+    },
+
+    "hover_popover_enabled": true,
+
+    "git": {
+        "enabled": true,
+        "git_gutter": "tracked_files",
+        "inline_blame": {
+            "enabled": true,
+            "delay_ms": 500,
+        },
+    },
+
+    "terminal": {
+        "shell": {
+            "program": "/opt/homebrew/bin/zsh",
+        },
+        "font_family": "JetBrains Mono",
+        "font_size": 13,
+        "cursor_shape": "bar",
+        "blinking": "on",
+        "working_directory": "current_project_directory",
+    },
+
+    "file_scan_exclusions": [
+        "**/.git",
+        "**/.DS_Store",
+        "**/__pycache__",
+        "**/.venv",
+        "**/venv",
+        "**/.mypy_cache",
+        "**/.ruff_cache",
+        "**/.pytest_cache",
+        "**/node_modules",
+        "**/dist",
+        "**/build",
+        "**/target",
+        "**/wandb",
+        "**/mlruns",
+        "**/.gradle",
+        "**/out",
+    ],
+
+    "languages": {
+        "Python": {
+            "tab_size": 4,
+            "format_on_save": "on",
+            "formatter": {
+                "language_server": {
+                    "name": "ruff",
+                },
+            },
+            "code_actions_on_format": {
+                "source.fixAll.ruff": true,
+                "source.organizeImports.ruff": true,
+            },
+        },
+
+        "Rust": {
+            "tab_size": 4,
+            "format_on_save": "on",
+            "formatter": {
+                "language_server": {
+                    "name": "rust-analyzer",
+                },
+            },
+        },
+
+        "Go": {
+            "tab_size": 4,
+            "format_on_save": "on",
+            "formatter": {
+                "language_server": {
+                    "name": "gopls",
+                },
+            },
+        },
+
+        "Java": {
+            "tab_size": 4,
+            "format_on_save": "on",
+        },
+
+        "JSON": {
+            "tab_size": 2,
+            "format_on_save": "on",
+        },
+
+        "YAML": {
+            "tab_size": 2,
+            "format_on_save": "on",
+        },
+
+        "TOML": {
+            "tab_size": 2,
+            "format_on_save": "on",
+        },
+
+        "Markdown": {
+            "soft_wrap": "preferred_line_length",
+            "preferred_line_length": 80,
+            "format_on_save": "off",
+        },
+    },
+
+    "lsp": {
+        "rust-analyzer": {
+            "initialization_options": {
+                "check": {
+                    "command": "clippy",
+                    "features": "all",
+                },
+                "cargo": {
+                    "features": "all",
+                    "buildScripts": {
+                        "enable": true,
+                    },
+                },
+                "rustfmt": {
+                    "enable": true,
+                },
+                "completion": {
+                    "enable": true,
+                },
+                "inlayHints": {
+                    "parameterHints": {
+                        "enable": true,
+                    },
+                    "typeHints": {
+                        "enable": true,
+                    },
+                    "chainingHints": {
+                        "enable": true,
+                    },
+                },
+                "toolchain": "stable",
+            },
+        },
+
+        "pyright": {
+            "settings": {
+                "python": {
+                    "pythonPath": ".venv/bin/python",
+                    "analysis": {
+                        "typeCheckingMode": "basic",
+                        "autoImportCompletions": true,
+                        "autoSearchPaths": true,
+                        "useLibraryCodeForTypes": true,
+                        "diagnosticMode": "workspace",
+                    },
+                },
+            },
+        },
+
+        "ruff": {
+            "initialization_options": {
+                "settings": {
+                    "lint": {
+                        "enable": true,
+                    },
+                    "format": {
+                        "enable": true,
+                    },
+                },
+            },
+        },
+
+        "gopls": {
+            "initialization_options": {
+                "hints": {
+                    "assignVariableTypes": true,
+                    "compositeLiteralFields": true,
+                    "compositeLiteralTypes": true,
+                    "constantValues": true,
+                    "functionTypeParameters": true,
+                    "parameterNames": true,
+                    "rangeVariableTypes": true,
+                },
+                "staticcheck": true,
+                "analyses": {
+                    "unusedparams": true,
+                    "shadow": true,
+                },
+            },
+        },
+    },
+}

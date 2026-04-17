@@ -1,0 +1,91 @@
+formulae:
+  - ripgrep
+  - fd
+  - fzf
+  - bat
+  - eza
+  - delta
+  - zoxide
+  - zsh-autosuggestions
+  - zsh-syntax-highlighting
+
+  - jq
+  - yq
+
+  - gh
+  - git
+  - git-delta
+  - pyenv
+  - uv
+  - fnm
+  - rustup
+  - go
+  - java
+  - kubectl
+  - kubectx
+  - awscli
+
+  - tmux
+  - starship
+  - htop
+  - btop
+  - tree
+  - wget
+  - curl
+
+  - hyperfine
+  - tokei
+  - dust
+  - procs
+
+casks:
+  - ghostty
+  - zed
+  - pycharm-ce
+  - google-cloud-sdk
+
+oh_my_zsh:
+  install: true
+  theme: "starship"
+  plugins:
+    - git
+    - fzf
+    - zoxide
+    - pyenv
+    - docker
+    - kubectl
+    - z
+    - colored-man-pages
+    - command-not-found
+    - zsh-autosuggestions
+    - zsh-syntax-highlighting
+    - rust
+    - golang
+
+symlinks:
+  "zsh/.zshrc":                     ".zshrc"
+  "zsh/.zprofile":                  ".zprofile"
+  "git/.gitconfig":                 ".gitconfig"
+  "git/.gitignore_global":          ".gitignore_global"
+  "ghostty":                        ".config/ghostty"
+  "zed/settings.json":              ".config/zed/settings.json"
+  "zed/keymap.json":                ".config/zed/keymap.json"
+  "tmux/.tmux.conf":                ".tmux.conf"
+  "starship/starship.toml":         ".config/starship.toml"
+
+post_install:
+  - description: "Install Rust via rustup"
+    cmd: "rustup-init -y --no-modify-path"
+    skip_if: "command -v rustc &>/dev/null"
+
+  - description: "Set zsh as default shell"
+    cmd: "chsh -s $(brew --prefix)/bin/zsh"
+    skip_if: "[ \"$SHELL\" = \"$(brew --prefix)/bin/zsh\" ]"
+
+  - description: "Install fzf shell integrations"
+    cmd: "$(brew --prefix)/opt/fzf/install --key-bindings --completion --no-update-rc"
+    skip_if: "grep -q 'fzf' ~/.zshrc 2>/dev/null"
+
+  - description: "Set up Zed as default editor for git"
+    cmd: "git config --global core.editor 'zed --wait'"
+    skip_if: ""

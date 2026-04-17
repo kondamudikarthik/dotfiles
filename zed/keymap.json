@@ -1,0 +1,31 @@
+[
+  // Zed keymap — Karthik Kondamudi
+  // Docs: https://zed.dev/docs/key-bindings
+  {
+    "context": "Editor",
+    "bindings": {
+      // Move lines up/down (like JetBrains)
+      "alt-up": "editor::MoveLineUp",
+      "alt-down": "editor::MoveLineDown",
+      // Duplicate line
+      "cmd-d": "editor::SelectNext",
+      // Toggle comment
+      "cmd-/": "editor::ToggleComments",
+      // Open terminal
+      "ctrl-`": "workspace::ToggleBottomDock"
+    }
+  },
+  {
+    "context": "Workspace",
+    "bindings": {
+      // File finder (like Cmd+P in VSCode)
+      "cmd-p": "file_finder::Toggle",
+      // Command palette
+      "cmd-shift-p": "command_palette::Toggle",
+      // Project-wide search
+      "cmd-shift-f": "workspace::NewSearch",
+      // Toggle sidebar
+      "cmd-b": "workspace::ToggleLeftDock"
+    }
+  }
+]

@@ -1,0 +1,71 @@
+# Ghostty config — Karthik Kondamudi
+# Docs: https://ghostty.org/docs/config
+# Location (symlinked by bootstrap.sh): ~/.config/ghostty/config
+
+# -----------------------------------------------------------------------------
+# Font
+# -----------------------------------------------------------------------------
+font-family = "JetBrains Mono"
+font-size = 14
+font-feature = calt    # ligatures
+font-feature = liga
+
+# -----------------------------------------------------------------------------
+# Theme / Appearance
+# -----------------------------------------------------------------------------
+theme = "Dracula"
+
+# Transparency (0.0 = opaque, 1.0 = fully transparent)
+background-opacity = 0.95
+background-blur-radius = 20
+
+# Window
+window-decoration = true
+window-padding-x = 10
+window-padding-y = 8
+
+# Hide title bar on macOS for a cleaner look
+macos-titlebar-style = hidden
+
+# -----------------------------------------------------------------------------
+# Shell
+# -----------------------------------------------------------------------------
+shell-integration = zsh
+
+# -----------------------------------------------------------------------------
+# Cursor
+# -----------------------------------------------------------------------------
+cursor-style = bar
+cursor-style-blink = true
+
+# -----------------------------------------------------------------------------
+# Scrollback
+# -----------------------------------------------------------------------------
+scrollback-limit = 10000
+
+# -----------------------------------------------------------------------------
+# Key bindings
+# -----------------------------------------------------------------------------
+# Cmd+T → new tab
+keybind = cmd+t=new_tab
+# Cmd+W → close tab
+keybind = cmd+w=close_surface
+# Cmd+D → split right
+keybind = cmd+d=new_split:right
+# Cmd+Shift+D → split down
+keybind = cmd+shift+d=new_split:down
+# Cmd+[ / Cmd+] → previous/next tab
+keybind = cmd+[=previous_tab
+keybind = cmd+]=next_tab
+# Cmd+Enter → toggle fullscreen
+keybind = cmd+enter=toggle_fullscreen
+
+# -----------------------------------------------------------------------------
+# Copy / Paste
+# -----------------------------------------------------------------------------
+copy-on-select = true
+
+# -----------------------------------------------------------------------------
+# URLs
+# -----------------------------------------------------------------------------
+link-url = true

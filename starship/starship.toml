@@ -1,0 +1,61 @@
+format = """
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_status\
+$python\
+$rust\
+$golang\
+$java\
+$nodejs\
+$cmd_duration\
+$line_break\
+$character"""
+
+[directory]
+truncation_length = 4
+truncate_to_repo = true
+style = "bold cyan"
+
+[git_branch]
+symbol = " "
+style = "bold purple"
+
+[git_status]
+style = "bold red"
+ahead  = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+modified = "!${count}"
+untracked = "?${count}"
+staged = "+${count}"
+
+[python]
+symbol = " "
+style = "bold yellow"
+pyenv_version_name = true
+
+[rust]
+symbol = " "
+style = "bold orange"
+
+[golang]
+symbol = " "
+style = "bold cyan"
+
+[java]
+symbol = " "
+style = "bold red"
+
+[nodejs]
+symbol = " "
+style = "bold green"
+
+[cmd_duration]
+min_time = 2000
+format = " took [$duration](bold yellow)"
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol   = "[❯](bold red)"
