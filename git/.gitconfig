@@ -1,6 +1,13 @@
 [user]
 	name  = Karthik Kondamudi
-	email = kar6308@gmail.com
+	# email comes from the per-folder includes below
+
+# Identity by folder: ~/repos/personal → personal email, ~/repos/work → work email
+# (~/.gitconfig-work is machine-local, not checked in)
+[includeIf "gitdir:~/repos/personal/"]
+	path = ~/.gitconfig-personal
+[includeIf "gitdir:~/repos/work/"]
+	path = ~/.gitconfig-work
 
 [core]
 	editor = zed --wait
@@ -58,8 +65,17 @@
 [color]
 	ui = auto
 
-[url "git@github.com:"]
-	insteadOf = https://github.com/
-
 [credential]
 	helper = osxkeychain
+
+# HTTPS auth for both GitHubs goes through `gh` (see `gh auth login`)
+[credential "https://github.com"]
+	helper =
+	helper = !/opt/homebrew/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper =
+	helper = !/opt/homebrew/bin/gh auth git-credential
+
+# Machine-local settings (work hosts etc.) — not checked in, ignored if missing
+[include]
+	path = ~/.gitconfig.local

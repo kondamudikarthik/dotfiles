@@ -21,6 +21,8 @@ formulae:
   - rustup
   - go
   - java
+  - cmake
+  - ninja
   - kubectl
   - kubectx
   - awscli
@@ -43,6 +45,7 @@ casks:
   - zed
   - pycharm-ce
   - google-cloud-sdk
+  - opensuperwhisper
 
 oh_my_zsh:
   install: true
@@ -66,6 +69,7 @@ symlinks:
   "zsh/.zshrc":                     ".zshrc"
   "zsh/.zprofile":                  ".zprofile"
   "git/.gitconfig":                 ".gitconfig"
+  "git/.gitconfig-personal":        ".gitconfig-personal"
   "git/.gitignore_global":          ".gitignore_global"
   "ghostty":                        ".config/ghostty"
   "zed/settings.json":              ".config/zed/settings.json"
@@ -73,10 +77,35 @@ symlinks:
   "tmux/.tmux.conf":                ".tmux.conf"
   "starship/starship.toml":         ".config/starship.toml"
 
+# GitHub hosts to log in to with `gh` (HTTPS + browser login).
+# Work hosts are NOT listed here — this repo is public.
+github:
+  personal: "github.com"
+
+# Repos to clone into ~/repos/personal/<name>. Already-cloned repos are skipped.
+# Work repos are NOT listed here — this repo is public.
+repos:
+  personal:
+    - https://github.com/kondamudikarthik/dotfiles
+
 post_install:
-  - description: "Install Rust via rustup"
-    cmd: "rustup-init -y --no-modify-path"
-    skip_if: "command -v rustc &>/dev/null"
+  # Homebrew's rustup is keg-only and no longer ships rustup-init.
+  - description: "Install Rust stable toolchain via rustup"
+    cmd: "$(brew --prefix rustup)/bin/rustup default stable"
+    skip_if: "$(brew --prefix rustup)/bin/rustc --version"
+
+  - description: "Install Python 3.12 via uv"
+    cmd: "uv python install 3.12"
+    skip_if: "uv python find 3.12"
+
+  # Some uvx-run tools (e.g. MCP servers) require Python >= 3.13
+  - description: "Install Python 3.13 via uv"
+    cmd: "uv python install 3.13"
+    skip_if: "uv python find 3.13"
+
+  - description: "Register Homebrew OpenJDK with macOS (java_home) — needs sudo"
+    cmd: "sudo ln -sfn $(brew --prefix)/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk"
+    skip_if: "[ -e /Library/Java/JavaVirtualMachines/openjdk.jdk ]"
 
   - description: "Set zsh as default shell"
     cmd: "chsh -s $(brew --prefix)/bin/zsh"

@@ -38,7 +38,8 @@ if command -v uv &>/dev/null; then
   export PATH="$(uv python find 3.12 | xargs dirname):$PATH"
 fi
 
-export PATH="$HOME/.cargo/bin:$PATH"
+# Homebrew's rustup is keg-only: its bin holds the rustc/cargo proxies
+export PATH="$BREW_PREFIX/opt/rustup/bin:$HOME/.cargo/bin:$PATH"
 if command -v rustup &>/dev/null; then
   export RUST_SRC_PATH="$(rustc --print sysroot)/lib/rustlib/src/rust/src"
 fi
@@ -52,7 +53,6 @@ fi
 
 if command -v zoxide &>/dev/null; then
   eval "$(zoxide init zsh)"
-  alias cd="z"
 fi
 
 [ -f "$BREW_PREFIX/opt/fzf/shell/key-bindings.zsh" ] && \
@@ -95,7 +95,7 @@ alias gco="git checkout"
 alias gb="git branch"
 alias glog="git log --oneline --graph --decorate"
 
-alias dotfiles="zed $HOME/repos/dotfiles"
+alias dotfiles="zed $HOME/repos/personal/dotfiles"
 alias reload="source ~/.zshrc"
 
 alias py="python3"

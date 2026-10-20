@@ -3,20 +3,32 @@
 # bootstrap.sh — Karthik's dotfiles installer
 #
 # Reads config.yaml and sets up a new Mac from scratch:
+#   - Installs Xcode Command Line Tools (git, clang/clang++, make)
+#   - Creates ~/repos/personal and ~/repos/work
 #   - Installs Homebrew (if missing)
 #   - Installs all formulae and casks declared in config.yaml
 #   - Installs Oh My Zsh + plugins
-#   - Creates symlinks for all dotfiles
-#   - Runs post-install hooks
+#   - Creates symlinks for all dotfiles (incl. per-folder git identity)
+#   - Logs in to each GitHub host in config.yaml (personal)
+#   - Clones every repo listed in config.yaml
+#   - Runs post-install hooks (Rust, Python, Java, ...)
+#
+# Layout:
+#   ~/repos/personal/   personal repos (this dotfiles repo lives here)
+#   ~/repos/work/       work repos (cloned separately — not listed in this public repo)
 #
 # Usage:
 #   ./bootstrap.sh [--dry-run] [--help]
 #
-# To bootstrap a brand-new machine (before you've cloned the repo):
-#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/dotfiles/main/bootstrap.sh)"
+# To bootstrap a brand-new machine (before you've cloned the repo). It
+# installs the Command Line Tools, clones this repo into
+# ~/repos/personal/dotfiles and re-runs itself from there:
+#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/kondamudikarthik/dotfiles/main/bootstrap.sh)"
 # =============================================================================
 
 set -uo pipefail
+
+ORIG_ARGS=("$@")
 
 # -----------------------------------------------------------------------------
 # Flags
@@ -71,26 +83,64 @@ run() {
 # Signal handling
 trap 'echo ""; warn "Interrupted — exiting."; exit 130' SIGINT SIGTERM
 
-# -----------------------------------------------------------------------------
-# Locate the dotfiles directory (where this script lives)
-# -----------------------------------------------------------------------------
-DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG="$DOTFILES_DIR/config.yaml"
-
-if [[ ! -f "$CONFIG" ]]; then
-  error "config.yaml not found at $CONFIG"
-  exit 1
-fi
+GITHUB_USER="${GITHUB_USER:-kondamudikarthik}"
+REPOS_DIR="$HOME/repos"
+PERSONAL_DIR="$REPOS_DIR/personal"
+WORK_DIR="$REPOS_DIR/work"
+DEFAULT_DOTFILES_DIR="$PERSONAL_DIR/dotfiles"
 
 # -----------------------------------------------------------------------------
-# Step 1: Prerequisites
+# Step 1: Prerequisites (macOS + Xcode Command Line Tools)
 # -----------------------------------------------------------------------------
-info "Step 1/6: Checking prerequisites..."
+info "Step 1/9: Checking prerequisites..."
 
 OS=$(uname -s)
 if [[ "$OS" != "Darwin" ]]; then
   error "This script currently targets macOS only."
   exit 1
+fi
+
+# Command Line Tools provide git, clang/clang++, make. Full Xcode is NOT required.
+clt_installed() { xcode-select -p &>/dev/null && [[ -x "$(xcode-select -p)/usr/bin/git" ]]; }
+
+if clt_installed; then
+  success "Xcode Command Line Tools already installed."
+elif [[ "$DRY_RUN" == "true" ]]; then
+  echo "  [dry-run] Would run: xcode-select --install (and wait for it to finish)"
+else
+  warn "Xcode Command Line Tools not found — starting install."
+  xcode-select --install &>/dev/null || true
+  echo "  A dialog should have appeared. Click Install and wait for it to finish..."
+  until clt_installed; do
+    sleep 5
+  done
+  success "Xcode Command Line Tools installed."
+fi
+
+# -----------------------------------------------------------------------------
+# Locate the dotfiles directory (where this script lives). If we were piped
+# from curl there is no repo next to us, so clone it and re-run from there.
+# -----------------------------------------------------------------------------
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-.}")" && pwd)"
+
+if [[ ! -f "$DOTFILES_DIR/config.yaml" ]]; then
+  CLONE_URL="https://github.com/${GITHUB_USER}/dotfiles.git"
+  warn "No config.yaml next to this script — cloning $CLONE_URL → $DEFAULT_DOTFILES_DIR"
+  if [[ "$DRY_RUN" == "true" ]]; then
+    echo "  [dry-run] git clone $CLONE_URL $DEFAULT_DOTFILES_DIR, then re-run from there"
+    exit 0
+  fi
+  mkdir -p "$PERSONAL_DIR"
+  if [[ ! -d "$DEFAULT_DOTFILES_DIR/.git" ]]; then
+    git clone "$CLONE_URL" "$DEFAULT_DOTFILES_DIR" || { error "Clone failed."; exit 1; }
+  fi
+  exec "$DEFAULT_DOTFILES_DIR/bootstrap.sh" ${ORIG_ARGS[@]+"${ORIG_ARGS[@]}"}
+fi
+
+CONFIG="$DOTFILES_DIR/config.yaml"
+
+if [[ "$DOTFILES_DIR" != "$DEFAULT_DOTFILES_DIR" ]]; then
+  warn "Dotfiles are at $DOTFILES_DIR, expected $DEFAULT_DOTFILES_DIR. Symlinks will point at the current location."
 fi
 
 # In dry-run mode skip the backup prompt — nothing will be changed anyway
@@ -105,14 +155,26 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# Step 2: Homebrew
+# Step 2: Workspace folders
 # -----------------------------------------------------------------------------
-info "Step 2/6: Ensuring Homebrew is installed..."
+info "Step 2/9: Creating ~/repos/personal and ~/repos/work..."
+
+run "mkdir -p \"$PERSONAL_DIR\" \"$WORK_DIR\""
+success "Workspace ready:  personal → personal repos,  work → work repos."
+
+# -----------------------------------------------------------------------------
+# Step 3: Homebrew
+# -----------------------------------------------------------------------------
+info "Step 3/9: Ensuring Homebrew is installed..."
 
 BREW_INSTALLED=false
 if command -v brew &>/dev/null; then
   BREW_INSTALLED=true
   success "Homebrew already installed."
+elif [[ -x /opt/homebrew/bin/brew ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+  BREW_INSTALLED=true
+  success "Homebrew already installed (added to PATH for this session)."
 else
   warn "Homebrew not found."
   if [[ "$DRY_RUN" == "true" ]]; then
@@ -188,6 +250,44 @@ cfg_symlinks() {
   done < "$CONFIG"
 }
 
+# cfg_github_hosts — prints "group|host" pairs from the github section
+cfg_github_hosts() {
+  local in_section=false
+  while IFS= read -r line; do
+    if [[ "$line" =~ ^github: ]]; then
+      in_section=true; continue
+    fi
+    if $in_section && [[ "$line" =~ ^[a-zA-Z] ]]; then
+      break
+    fi
+    if $in_section && [[ "$line" =~ ^[[:space:]]+([a-z]+):[[:space:]]*\"?([^\"[:space:]]+)\"? ]]; then
+      echo "${BASH_REMATCH[1]}|${BASH_REMATCH[2]}"
+    fi
+  done < "$CONFIG"
+}
+
+# cfg_repos — prints "group|url" pairs from the repos section
+# (group = personal | work, i.e. the folder under ~/repos)
+cfg_repos() {
+  local in_section=false group=""
+  while IFS= read -r line; do
+    if [[ "$line" =~ ^repos: ]]; then
+      in_section=true; continue
+    fi
+    if $in_section && [[ "$line" =~ ^[a-zA-Z] ]]; then
+      break
+    fi
+    $in_section || continue
+    if [[ "$line" =~ ^[[:space:]]+([a-z]+):[[:space:]]*$ ]]; then
+      group="${BASH_REMATCH[1]}"
+    elif [[ -n "$group" && "$line" =~ ^[[:space:]]*-[[:space:]]+(.*) ]]; then
+      local url="${BASH_REMATCH[1]%%#*}"
+      url="$(echo "$url" | xargs)"
+      [[ -n "$url" ]] && echo "${group}|${url}"
+    fi
+  done < "$CONFIG"
+}
+
 # cfg_omz_install — returns "true" or "false"
 cfg_omz_install() {
   grep -A1 '^oh_my_zsh:' "$CONFIG" | grep 'install:' | awk '{print $2}' | tr -d '"'
@@ -223,9 +323,9 @@ cfg_hooks() {
 }
 
 # -----------------------------------------------------------------------------
-# Step 3: Homebrew formulae & casks
+# Step 4: Homebrew formulae & casks
 # -----------------------------------------------------------------------------
-info "Step 3/6: Installing Homebrew packages from config.yaml..."
+info "Step 4/9: Installing Homebrew packages from config.yaml..."
 
 FORMULAE=()
 while IFS= read -r formula; do
@@ -266,9 +366,9 @@ fi
 success "All packages processed."
 
 # -----------------------------------------------------------------------------
-# Step 4: Oh My Zsh
+# Step 5: Oh My Zsh
 # -----------------------------------------------------------------------------
-info "Step 4/6: Setting up Oh My Zsh..."
+info "Step 5/9: Setting up Oh My Zsh..."
 
 OMZ_INSTALL=$(cfg_omz_install)
 
@@ -306,9 +406,9 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# Step 5: Dotfile symlinks
+# Step 6: Dotfile symlinks
 # -----------------------------------------------------------------------------
-info "Step 5/6: Creating symlinks..."
+info "Step 6/9: Creating symlinks..."
 
 #######################################
 # symlink src dst
@@ -353,9 +453,58 @@ done < <(cfg_symlinks)
 success "Symlinks processed."
 
 # -----------------------------------------------------------------------------
-# Step 6: Post-install hooks
+# Step 7: GitHub logins (hosts from config.yaml)
+# git credentials for these hosts are wired to `gh` in git/.gitconfig.
 # -----------------------------------------------------------------------------
-info "Step 6/6: Running post-install hooks..."
+info "Step 7/9: Logging in to GitHub..."
+
+while IFS= read -r pair; do
+  group="${pair%%|*}"
+  host="${pair#*|}"
+
+  if [[ "$DRY_RUN" == "true" ]]; then
+    echo "  [dry-run] gh auth login --hostname $host ($group)"
+  elif ! command -v gh &>/dev/null; then
+    warn "gh not installed — skipping login to $host"
+  elif gh auth status --hostname "$host" &>/dev/null; then
+    success "Already logged in to $host ($group) as $(gh api user --hostname "$host" -q .login 2>/dev/null)."
+  else
+    echo "  Logging in to $host ($group) — a browser window will open..."
+    gh auth login --hostname "$host" --git-protocol https --web \
+      || warn "Login to $host failed — run: gh auth login --hostname $host"
+  fi
+done < <(cfg_github_hosts)
+
+success "GitHub logins processed."
+
+# -----------------------------------------------------------------------------
+# Step 8: Clone repos (list from config.yaml)
+# -----------------------------------------------------------------------------
+info "Step 8/9: Cloning repos..."
+
+while IFS= read -r pair; do
+  group="${pair%%|*}"
+  url="${pair#*|}"
+
+  name="$(basename "$url" .git)"
+  dst="$REPOS_DIR/$group/$name"
+
+  if [[ -d "$dst/.git" ]]; then
+    echo "    ✔ $group/$name (already cloned)"
+  elif [[ -e "$dst" ]]; then
+    warn "$dst exists but isn't a git repo — skipping $url"
+  else
+    echo "    Cloning $url → $group/$name"
+    run "mkdir -p \"$REPOS_DIR/$group\" && git clone \"$url\" \"$dst\"" || warn "Clone of $url failed — skipping"
+  fi
+done < <(cfg_repos)
+
+success "Repos processed."
+
+# -----------------------------------------------------------------------------
+# Step 9: Post-install hooks
+# -----------------------------------------------------------------------------
+info "Step 9/9: Running post-install hooks..."
 
 while IFS= read -r hook_line; do
   desc="${hook_line%%|||*}"
@@ -388,7 +537,8 @@ else
   echo -e "${GREEN}${BOLD}✔ Bootstrap complete! Open a new terminal (or run: exec zsh) to get started.${RESET}"
   echo ""
   echo "  Tips:"
-  echo "  • Edit ~/repos/dotfiles/config.yaml to add/remove tools"
+  echo "  • Work repos go in ~/repos/work, personal ones in ~/repos/personal"
+  echo "  • Edit ~/repos/personal/dotfiles/config.yaml to add tools or repos"
   echo "  • Re-run bootstrap.sh any time — it's idempotent"
   echo "  • zed .   → open current directory in Zed"
   echo "  • rg, fd, bat, eza, fzf, zoxide are all ready to go"
